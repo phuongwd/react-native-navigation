@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, Text, Dimensions, ViewProps, Platform } from 'react-native';
-import Reanimated, { EasingNode, useValue } from 'react-native-reanimated';
+import Reanimated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming,
+  Easing 
+} from 'react-native-reanimated';
 import FastImage from 'react-native-fast-image';
 import { CarItem } from '../../assets/cars';
 import { hexToRgba } from '../../commons/Colors';
@@ -29,31 +34,32 @@ export default function CarCard({
 
   const color = useMemo(() => hexToRgba(car.color, TEXT_BANNER_OPACITY), [car.color]);
 
-  const textContainerOpacity = useValue(1);
+  const textContainerOpacity = useSharedValue(1);
 
   const containerStyle = useMemo(() => [styles.container, style], [style]);
-  const textContainerStyle = useMemo(
-    () => [styles.textContainer, { opacity: textContainerOpacity, backgroundColor: color }],
-    [color, textContainerOpacity]
-  );
+  
+  const animatedTextContainerStyle = useAnimatedStyle(() => ({
+    ...styles.textContainer,
+    opacity: textContainerOpacity.value,
+    backgroundColor: color,
+  }), [color]);
 
   const onPress = useCallback(() => {
     onCarPressed();
     isTextHidden.current = true;
-    Reanimated.timing(textContainerOpacity, {
-      toValue: 0,
+    textContainerOpacity.value = withTiming(0, {
       duration: 300,
-      easing: EasingNode.linear,
-    }).start();
+      easing: Easing.linear,
+    });
   }, [onCarPressed, textContainerOpacity]);
+  
   const onFocus = useCallback(() => {
     if (isTextHidden.current === true) {
       isTextHidden.current = false;
-      Reanimated.timing(textContainerOpacity, {
-        toValue: 1,
+      textContainerOpacity.value = withTiming(1, {
         duration: 300,
-        easing: EasingNode.linear,
-      }).start();
+        easing: Easing.linear,
+      });
     }
   }, [textContainerOpacity]);
 
@@ -75,7 +81,7 @@ export default function CarCard({
         style={styles.image}
         resizeMode="cover"
       />
-      <Reanimated.View style={textContainerStyle}>
+      <Reanimated.View style={animatedTextContainerStyle}>
         <Text
           nativeID={`title${car.id}`}
           style={styles.title}
