@@ -6,6 +6,7 @@ import testIDs from './testIDs';
 import Screens from './screens/Screens';
 
 // @ts-ignore
+// eslint-disable-next-line no-global-assign
 alert = (title, message) =>
   Navigation.showOverlay({
     component: {
