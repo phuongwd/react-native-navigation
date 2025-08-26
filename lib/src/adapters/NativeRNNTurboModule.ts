@@ -1,41 +1,40 @@
 import { TurboModule, TurboModuleRegistry } from 'react-native';
-import { UnsafeObject, Double } from 'react-native/Libraries/Types/CodegenTypes';
 
 export interface Spec extends TurboModule {
   readonly getConstants: () => {
-    topBarHeight: Double;
-    statusBarHeight: Double;
-    bottomTabsHeight: Double;
+    topBarHeight: number;
+    statusBarHeight: number;
+    bottomTabsHeight: number;
     backButtonId: string;
   };
 
-  setRoot(commandId: string, layout: UnsafeObject): Promise<string>;
+  setRoot(commandId: string, layout: Object): Promise<string>;
 
-  setDefaultOptions(options: UnsafeObject): void;
+  setDefaultOptions(options: Object): void;
 
-  mergeOptions(componentId: string, options: UnsafeObject): void;
+  mergeOptions(componentId: string, options: Object): void;
 
-  push(commandId: string, componentId: string, layout: UnsafeObject): Promise<string>;
+  push(commandId: string, componentId: string, layout: Object): Promise<string>;
 
-  pop(commandId: string, componentId: string, options?: UnsafeObject): Promise<string>;
+  pop(commandId: string, componentId: string, options?: Object): Promise<string>;
 
-  popTo(commandId: string, componentId: string, options?: UnsafeObject): Promise<string>;
+  popTo(commandId: string, componentId: string, options?: Object): Promise<string>;
 
-  popToRoot(commandId: string, componentId: string, options?: UnsafeObject): Promise<string>;
+  popToRoot(commandId: string, componentId: string, options?: Object): Promise<string>;
 
   setStackRoot(
     commandId: string,
     componentId: string,
-    layout: Array<UnsafeObject>
+    layout: Array<Object>
   ): Promise<string>;
 
-  showModal(commandId: string, layout: UnsafeObject): Promise<string>;
+  showModal(commandId: string, layout: Object): Promise<string>;
 
-  dismissModal(commandId: string, componentId: string, options?: UnsafeObject): Promise<string>;
+  dismissModal(commandId: string, componentId: string, options?: Object): Promise<string>;
 
-  dismissAllModals(commandId: string, options?: UnsafeObject): Promise<string>;
+  dismissAllModals(commandId: string, options?: Object): Promise<string>;
 
-  showOverlay(commandId: string, layout: UnsafeObject): Promise<string>;
+  showOverlay(commandId: string, layout: Object): Promise<string>;
 
   dismissOverlay(commandId: string, componentId: string): Promise<string>;
 
