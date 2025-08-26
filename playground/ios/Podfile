@@ -17,12 +17,11 @@ end
 def all_pods
   config = use_native_modules!
 
-  flags = get_default_flags()
-
+  # React Native 0.80 compatible configuration - removed deprecated get_default_flags()
   use_react_native!(
     :path => "../../node_modules/react-native",
-    :hermes_enabled => flags[:hermes_enabled],
-    :fabric_enabled => flags[:fabric_enabled],
+    :hermes_enabled => true,
+    :fabric_enabled => true,
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/../.."
   )
@@ -34,10 +33,23 @@ end
 post_install do |installer|
   react_native_post_install(installer, "../../node_modules/react-native", :mac_catalyst_enabled => false)
 
+  # React Native 0.80 Folly coroutine compatibility fix (proven production solution)
+  system("chmod -R u+w Pods/RCT-Folly")
+  Dir.glob("Pods/RCT-Folly/folly/Portability.h").each do |file|
+    text = File.read(file)
+    new_contents = text.gsub('#define FOLLY_HAS_COROUTINES 1', '#define FOLLY_HAS_COROUTINES 0')
+    File.open(file, "w") { |file| file.puts new_contents }
+  end
+
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
       config.build_settings['HEADER_SEARCH_PATHS'] << '$(PODS_ROOT)/Headers/Public/React-hermes'
+      
+      # React Native 0.80 iOS build requirements
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.4'
+      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
   end
 
