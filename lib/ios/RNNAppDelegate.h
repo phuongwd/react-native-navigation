@@ -10,4 +10,7 @@
 
 @interface RNNAppDelegate : RCTAppDelegate
 
+// React Native 0.81+ Migration Helper
+- (BOOL)isNewArchEnabledFromInfoPlist;
+
 @end

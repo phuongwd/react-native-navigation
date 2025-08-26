@@ -45,10 +45,14 @@ static NSString *const kRNConcurrentRoot = @"concurrentRoot";
 
     [RCTComponentViewFactory currentComponentViewFactory].thirdPartyFabricComponentsProvider = self;
 
-    RCTAppSetupPrepareApp(application, RCTIsNewArchEnabled());
-    // TODO React Native 0.81: RCTSetNewArchEnabled deprecated in 0.80, will be removed in 0.81+
-    // Use Info.plist RCTNewArchEnabled key instead when upgrading further
-    RCTSetNewArchEnabled(TRUE);
+    // React Native 0.80 Migration Strategy: Prepare for RCTSetNewArchEnabled removal in 0.81+
+    BOOL newArchEnabled = [self isNewArchEnabledFromInfoPlist];
+
+    RCTAppSetupPrepareApp(application, newArchEnabled);
+
+    // COMPATIBILITY: Keep RCTSetNewArchEnabled for React Native 0.80 support
+    // TODO React Native 0.81: Remove this call and rely solely on Info.plist configuration
+    RCTSetNewArchEnabled(newArchEnabled);
     RCTEnableTurboModuleInterop(YES);
     RCTEnableTurboModuleInteropBridgeProxy(YES);
 
@@ -66,9 +70,9 @@ static NSString *const kRNConcurrentRoot = @"concurrentRoot";
       return strongSelf.bundleURL;
     };
 
-    RCTRootViewFactoryConfiguration *configuration =
-        [[RCTRootViewFactoryConfiguration alloc] initWithBundleURLBlock:bundleUrlBlock
-                                                         newArchEnabled:RCTIsNewArchEnabled()];
+    RCTRootViewFactoryConfiguration *configuration = [[RCTRootViewFactoryConfiguration alloc]
+        initWithBundleURLBlock:bundleUrlBlock
+                newArchEnabled:[self isNewArchEnabledFromInfoPlist]];
 
     // CRITICAL: Set RNNAppDelegate as the JS Runtime Configurator for React Native 0.80
     configuration.jsRuntimeConfiguratorDelegate = self;
@@ -85,6 +89,24 @@ static NSString *const kRNConcurrentRoot = @"concurrentRoot";
 
 - (BOOL)concurrentRootEnabled {
     return true;
+}
+
+#pragma mark - React Native 0.81+ Migration Helper
+
+- (BOOL)isNewArchEnabledFromInfoPlist {
+    // React Native 0.81+ Migration: Read New Architecture setting from Info.plist
+    // This replaces the deprecated RCTSetNewArchEnabled() call
+    // Reference:
+    // https://github.com/facebook/react-native/blob/main/packages/react-native/React/Base/RCTUtils.h#L190-L192
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSNumber *newArchEnabled = [bundle objectForInfoDictionaryKey:@"RCTNewArchEnabled"];
+
+    if (newArchEnabled != nil) {
+        return [newArchEnabled boolValue];
+    }
+
+    // Fallback to RCTIsNewArchEnabled() for backward compatibility with existing configurations
+    return RCTIsNewArchEnabled();
 }
 
 #pragma mark - RCTTurboModuleManagerDelegate
@@ -121,7 +143,8 @@ class RCTAppDelegateBridgelessFeatureFlags
 };
 
 - (void)_setUpFeatureFlags {
-    if (RCTIsNewArchEnabled()) {
+    // Use Info.plist-based New Architecture detection for React Native 0.81+ compatibility
+    if ([self isNewArchEnabledFromInfoPlist]) {
         facebook::react::ReactNativeFeatureFlags::override(
             std::make_unique<RCTAppDelegateBridgelessFeatureFlags>());
     }
